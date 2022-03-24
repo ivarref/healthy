@@ -58,7 +58,7 @@ like the following:
 ```
 
 If you use this example, make sure that `(h/add-error!)` is *not* invoked
-an additional time when `/healtcheck` returns unhealthy.
+an additional time when `/health` returns unhealthy.
 (Yes, I did that mistake ¯\_(ツ)_/¯.)
 
 ## License
