@@ -28,6 +28,8 @@
 
 
 (defn- remove-old [duration now-ms errs]
+  (when (nil? duration)
+    (throw (ex-info "Duration was nil, did you forget to call `com.github.ivarref.healthy/init!`?" {})))
   (reduce-kv (fn [m k v]
                (if (<= k (- now-ms duration))
                  m
