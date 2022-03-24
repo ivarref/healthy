@@ -1,10 +1,10 @@
 (ns com.github.ivarref.healthy
   (:import (java.time Duration)))
 
-(def config (atom {}))
-(def errors (atom {}))
+(def ^:private config (atom {}))
+(def ^:private errors (atom {}))
 
-(def ^:dynamic *now-ms* (fn [] (System/currentTimeMillis)))
+(def ^:private ^:dynamic *now-ms* (fn [] (System/currentTimeMillis)))
 
 (declare drop-old-errors-impl! add-error!-impl)
 
@@ -20,12 +20,17 @@
       (reset! config {:duration millis})
       (reset! errors {}))))
 
-(defn error-count []
+(defn add-error!
+  "Adds an error, possibly removing old errors.
+
+  Returns number of errors."
+  []
+  (reduce + 0 (vals (add-error!-impl @config (*now-ms*) errors))))
+
+(defn error-count
+  "Returns number of errors."
+  []
   (reduce + 0 (vals (drop-old-errors-impl! @config (*now-ms*) errors))))
-
-(defn add-error! []
-  (add-error!-impl @config (*now-ms*) errors))
-
 
 (defn- remove-old [duration now-ms errs]
   (when (nil? duration)
@@ -37,12 +42,12 @@
              {}
              errs))
 
-(defn add-error!-impl [{:keys [duration]} now-ms err-atom]
+(defn- add-error!-impl [{:keys [duration]} now-ms err-atom]
   (let [bucket (long (* 60e3 (long (/ now-ms 60e3))))]
     (swap! err-atom
            (fn [errs]
              (->> (update errs bucket (fnil inc 0))
                   (remove-old duration now-ms))))))
 
-(defn drop-old-errors-impl! [{:keys [duration]} now-ms err-atom]
+(defn- drop-old-errors-impl! [{:keys [duration]} now-ms err-atom]
   (swap! err-atom (partial remove-old duration now-ms)))

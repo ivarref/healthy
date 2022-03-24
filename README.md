@@ -19,11 +19,11 @@ A simple Clojure (JVM) library for doing health checks over a given duration.
 
 ; Add an error:
 (h/add-error!)
-; => {1648120560000 1}
+; => 1 ; error count
 
 ; Add another error:
 (h/add-error!)
-; => {1648120560000 2}
+; => 2 ; error count
 
 ; Get error count:
 (h/error-count)
@@ -58,7 +58,8 @@ like the following:
         :body {:status "OK"}))))
 ```
 
-If you use this example, make sure that `(h/add-error!)` is *not* invoked when `/health` returns unhealthy, otherwise your service may not be able to recover.
+If you use this example, make sure that `(h/add-error!)` is *not* invoked 
+when `/health` returns unhealthy, otherwise your service may not be able to recover.
 Yes, I did that mistake ¯\\\_(ツ)\_/¯.
 
 ## License
