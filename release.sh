@@ -13,7 +13,7 @@ git commit -m "Release $VERSION"
 git tag -a v$VERSION -m "Release v$VERSION"
 git push --follow-tags
 
-clojure -M:deploy
+clojure -X:deploy
 
 echo "Released $VERSION"
 
