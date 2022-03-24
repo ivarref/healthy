@@ -18,7 +18,7 @@
       (assert (pos-int? millis) "Duration must be positive/non-zero")
       (assert (>= millis 60e3) "Duration must be at least 60 seconds")
       (reset! config {:duration millis})
-      (reset! errors []))))
+      (reset! errors {}))))
 
 (defn error-count []
   (reduce + 0 (vals (drop-old-errors-impl! @config (*now-ms*) errors))))

@@ -15,7 +15,7 @@
 
   (with-bindings {#'h/*now-ms*
                   (fn [] (+ (System/currentTimeMillis)
-                            (.toNanos (Duration/parse "PT15M"))))}
+                            (.toMillis (Duration/parse "PT15M"))))}
     (is (= 0 (h/error-count)))
 
     (h/add-error!)
