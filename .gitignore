@@ -1,5 +1,7 @@
 .idea/
-*.iml
 .clj-kondo/
 .cpcache/
+target/
+*.iml
 .nrepl-port
+
