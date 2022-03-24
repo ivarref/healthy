@@ -16,5 +16,3 @@ git push --follow-tags
 clojure -X:deploy
 
 echo "Released $VERSION"
-
-rm *.pom.asc
