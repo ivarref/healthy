@@ -38,9 +38,10 @@ A simple Clojure (JVM) library for doing health checks over a given duration.
 ## Example usage for HTTP server backends
 
 The idea is that you may for example want to invoke `(h/add-error!)` if a request takes
-too long to finish or fails in some other way.
+too long to finish or fails in some other way. `(h/error-count)` may be used
+to see if a service recovers or not after some time.
 
-Your `/health` endpoint or similar may then return healthy (or not) based on `(h/error-count)`
+Your `/health` endpoint or similar may return healthy (or not) based on `(h/error-count)`
 like the following:
 
 ```clojure
@@ -57,8 +58,7 @@ like the following:
         :body {:status "OK"}))))
 ```
 
-If you use this example, make sure that `(h/add-error!)` is *not* invoked
-an additional time when `/health` returns unhealthy.
+If you use this example, make sure that `(h/add-error!)` is *not* invoked when `/health` returns unhealthy, otherwise your service may not be able to recover.
 Yes, I did that mistake ¯\\\_(ツ)\_/¯.
 
 ## License
