@@ -2,14 +2,14 @@
   (:import (java.time Duration)))
 
 (def ^:private config (atom {}))
-(def ^:private errors (atom {}))
+(def ^:private stats (atom {}))
 
 (def ^:private ^:dynamic *now-ms* (fn [] (System/currentTimeMillis)))
 
-(declare drop-old-errors-impl! add-error!-impl)
+(declare drop-old-errors-impl! sum-stats-map add-to-bucket)
 
 (defn init! [{:keys [duration]
-              :as _cfg}]
+              :as   _cfg}]
   (let [duration (if (string? duration)
                    (Duration/parse duration)
                    duration)]
@@ -18,19 +18,40 @@
       (assert (pos-int? millis) "Duration must be positive/non-zero")
       (assert (>= millis 60e3) "Duration must be at least 60 seconds")
       (reset! config {:duration millis})
-      (reset! errors {}))))
+      (reset! stats {}))))
 
 (defn add-error!
-  "Adds an error, possibly removing old errors.
+  "Adds an error. Possibly remove old data.
 
   Returns number of errors."
   []
-  (reduce + 0 (vals (add-error!-impl @config (*now-ms*) errors))))
+  (:error (sum-stats-map (swap! stats (partial add-to-bucket (:duration @config) :error (*now-ms*))))))
+
+(defn add-ok!
+  "Adds an OK event. Possibly remove old data.
+
+  Returns number of OK events."
+  []
+  (:ok (sum-stats-map (swap! stats (partial add-to-bucket (:duration @config) :ok (*now-ms*))))))
 
 (defn error-count
-  "Returns number of errors."
+  "Returns number of errors. Possibly remove old data."
   []
-  (reduce + 0 (vals (drop-old-errors-impl! @config (*now-ms*) errors))))
+  (:error (sum-stats-map (drop-old-errors-impl! @config (*now-ms*) stats))))
+
+(defn error-percentage
+  "Returns error percentage, a double ranging from 0 to 100. Possibly remove old data."
+  []
+  (:error-percentage (sum-stats-map (drop-old-errors-impl! @config (*now-ms*) stats))))
+
+(defn- sum-stats-map [m]
+  (let [{:keys [ok error]
+         :or   {ok 0 error 0}} (reduce (partial merge-with +) {} (vals m))]
+    {:ok               ok
+     :error            error
+     :error-percentage (if (and (= ok 0) (= error 0))
+                         0.0
+                         (double (* 100 (/ error (+ ok error)))))}))
 
 (defn- remove-old [duration now-ms errs]
   (when (nil? duration)
@@ -42,12 +63,10 @@
              {}
              errs))
 
-(defn- add-error!-impl [{:keys [duration]} now-ms err-atom]
-  (let [bucket (long (* 60e3 (long (/ now-ms 60e3))))]
-    (swap! err-atom
-           (fn [errs]
-             (->> (update errs bucket (fnil inc 0))
-                  (remove-old duration now-ms))))))
+(defn- add-to-bucket [duration bucket-type now-ms stats]
+  (let [bucket (long (* 1e3 (long (/ now-ms 1e3))))]
+    (->> (update-in stats [bucket bucket-type] (fnil inc 0))
+         (remove-old duration now-ms))))
 
-(defn- drop-old-errors-impl! [{:keys [duration]} now-ms err-atom]
-  (swap! err-atom (partial remove-old duration now-ms)))
+(defn- drop-old-errors-impl! [{:keys [duration]} now-ms stats-atom]
+  (swap! stats-atom (partial remove-old duration now-ms)))
