@@ -75,6 +75,30 @@ Yes, I did that mistake ¯\\\_(ツ)\_/¯.
 
 ## Change log
 
+#### 2022-09-18 v0.1.18 [diff](https://github.com/ivarref/healthy/compare/v0.1.17...v0.1.18)
+Add `com.github.ivarref.healthy2` namespace, allowing any number of health checks.
+
+Example usage documented in the tests:
+
+```clojure
+(deftest basics
+  (let [now-ms (atom 0)
+        x (h2/init {:duration "PT60M"
+                    :ok?      #(<= % 1000)
+                    :now-ms   (fn [] @now-ms)
+                    :healthy? (fn [{:keys [error-percentage]}]
+                                (not (>= error-percentage 5)))})]
+    (is (true? @x))
+    (x 100)
+    (is (true? @x))
+    (x 10000)
+    (is (false? @x))
+    (swap! now-ms (partial + (dec (.toMillis (Duration/ofHours 1)))))
+    (is (false? @x))
+    (swap! now-ms inc)
+    (is (true? @x))))
+```
+
 #### 2022-09-07 v0.1.17 [diff](https://github.com/ivarref/healthy/compare/v0.1.16...v0.1.17)
 Add concept of error-percentage.
 
